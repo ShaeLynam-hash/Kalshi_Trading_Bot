@@ -2,7 +2,7 @@ name: Kalshi Arbitrage Bot
 
 on:
   schedule:
-    - cron: '*/15 * * * *'  # every 15 minutes, 24/7
+    - cron: '*/5 * * * *'   # every 5 minutes, 24/7
   workflow_dispatch:         # manual trigger from GitHub UI
 
 jobs:
@@ -25,8 +25,8 @@ jobs:
         env:
           KALSHI_API_KEY_ID:      ${{ secrets.KALSHI_API_KEY_ID }}
           KALSHI_PRIVATE_KEY_B64: ${{ secrets.KALSHI_PRIVATE_KEY_B64 }}
-          MIN_EDGE:        '0.04'
-          MAX_TRADE_USDC:  '25'
-          MAX_OPEN_POSITIONS: '8'
+          MIN_EDGE:        '0.02'
+          MAX_TRADE_USDC:  '10'
+          MAX_OPEN_POSITIONS: '15'
           DRY_RUN:         'false'
         run: python run_once.py
