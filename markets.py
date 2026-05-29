@@ -14,11 +14,7 @@ def _sign(method: str, path: str) -> dict:
     timestamp = str(int(time.time() * 1000))
     message = (timestamp + method.upper() + path).encode("utf-8")
 
-    print(f"[Auth] Key ID: {KALSHI_API_KEY_ID[:8]}..." if KALSHI_API_KEY_ID else "[Auth] ERROR: No Key ID set")
-    print(f"[Auth] Key loaded: {bool(KALSHI_PRIVATE_KEY)} | First line: {KALSHI_PRIVATE_KEY.splitlines()[0] if KALSHI_PRIVATE_KEY else 'EMPTY'}")
-    print(f"[Auth] Signing: {timestamp[:6]}... + {method.upper()} + {path}")
-
-    private_key = serialization.load_pem_private_key(
+private_key = serialization.load_pem_private_key(
         KALSHI_PRIVATE_KEY.encode(),
         password=None,
         backend=default_backend(),
@@ -58,10 +54,10 @@ def fetch_markets(force=False):
             params["cursor"] = cursor
 
         try:
+            # Markets endpoint is public — no auth headers needed
             resp = requests.get(
                 f"{KALSHI_HOST}/markets",
                 params=params,
-                headers=auth_headers("GET", path_base),
                 timeout=15,
             )
             if not resp.ok:
@@ -69,10 +65,7 @@ def fetch_markets(force=False):
                 break
             data = resp.json()
         except Exception as e:
-            print(f"[Markets] Error type: {type(e).__name__}")
-            print(f"[Markets] Error: {e}")
-            if hasattr(e, 'response') and e.response is not None:
-                print(f"[Markets] Response body: {e.response.text[:500]}")
+            print(f"[Markets] Fetch error: {e}")
             break
 
         batch = data.get("markets", [])
