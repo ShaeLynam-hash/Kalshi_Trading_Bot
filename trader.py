@@ -4,6 +4,28 @@ from config import KALSHI_HOST, DRY_RUN
 from markets import auth_headers
 
 
+def get_open_positions() -> set:
+    """Return set of tickers where we already have an open position."""
+    try:
+        path = "/trade-api/v2/portfolio/positions"
+        resp = requests.get(
+            f"{KALSHI_HOST}/portfolio/positions",
+            params={"limit": 200, "settlement_status": "unsettled"},
+            headers=auth_headers("GET", path),
+            timeout=10,
+        )
+        if not resp.ok:
+            print(f"[Positions] fetch failed {resp.status_code}: {resp.text[:200]}")
+            return set()
+        positions = resp.json().get("market_positions", [])
+        tickers = {p["ticker"] for p in positions if p.get("position", 0) != 0}
+        print(f"[Positions] {len(tickers)} open positions")
+        return tickers
+    except Exception as e:
+        print(f"[Positions] error: {e}")
+        return set()
+
+
 def place_order(ticker: str, side: str, price: float, count: int, label: str = "") -> bool:
     tag = f"[{'DRY RUN' if DRY_RUN else 'LIVE'}] {label}"
     price_cents = int(round(price * 100))
