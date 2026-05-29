@@ -88,13 +88,13 @@ def fetch_markets(force=False):
     return all_markets
 
 
-def normalize_price(market: dict, field: str) -> float:
-    val = market.get(field)
-    if val is None:
-        return None
-    val = float(val)
-    # Kalshi returns prices as decimals (0.0–1.0)
-    return val
+def normalize_price(market: dict, base: str) -> float:
+    # Kalshi uses yes_ask_dollars / no_ask_dollars field names
+    for field in (f"{base}_dollars", base):
+        val = market.get(field)
+        if val is not None:
+            return float(val)
+    return None
 
 
 def yes_ask(market):
