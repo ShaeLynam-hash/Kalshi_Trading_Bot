@@ -78,7 +78,7 @@ def fetch_markets(force=False):
     all_markets = []
     for series in CRYPTO_SERIES:
         batch = _fetch_series(series)
-        all_markets.extend(batch)
+        all_markets.extend(normalize_market(m) for m in batch)
         print(f"[Markets] {series}: {len(batch)} markets")
         time.sleep(0.5)
 
@@ -88,13 +88,32 @@ def fetch_markets(force=False):
     return all_markets
 
 
+def _cents_to_dollars(val) -> float | None:
+    """Kalshi prices can be in cents (int) or already fractional (float < 1)."""
+    if val is None:
+        return None
+    v = float(val)
+    # If the value is > 1 it's in cents (e.g. 30 → $0.30)
+    return v / 100.0 if v > 1 else v
+
+
 def normalize_price(market: dict, base: str) -> float:
-    # Kalshi uses yes_ask_dollars / no_ask_dollars field names
-    for field in (f"{base}_dollars", base):
-        val = market.get(field)
+    for field_name in (f"{base}_dollars", base):
+        val = market.get(field_name)
         if val is not None:
-            return float(val)
+            return _cents_to_dollars(val)
     return None
+
+
+def normalize_market(m: dict) -> dict:
+    """Return a clean dict with guaranteed price keys for the strategy layer."""
+    return {
+        **m,
+        "yes_ask": normalize_price(m, "yes_ask"),
+        "no_ask":  normalize_price(m, "no_ask"),
+        "yes_bid": normalize_price(m, "yes_bid"),
+        "no_bid":  normalize_price(m, "no_bid"),
+    }
 
 
 def yes_ask(market):
