@@ -73,10 +73,13 @@ def _years_to_expiry(close_time: str) -> float:
         return 0.0
 
 
-def _asset_from_series(series_ticker: str) -> str:
-    for prefix, asset in ASSET_MAP.items():
-        if series_ticker.startswith(prefix):
-            return asset
+def _asset_from_market(market: dict) -> str:
+    # Check series_ticker and ticker both — general fetch may populate either
+    for key in ("series_ticker", "ticker", "event_ticker"):
+        val = market.get(key, "") or ""
+        for prefix, asset in ASSET_MAP.items():
+            if val.startswith(prefix):
+                return asset
     return None
 
 
@@ -87,11 +90,12 @@ def find_opportunities(markets: list) -> List[QuantOpportunity]:
     price_cache = {}
     vol_cache = {}
 
+    crypto_count = 0
     for market in markets:
-        series = market.get("series_ticker", "")
-        asset = _asset_from_series(series)
+        asset = _asset_from_market(market)
         if not asset:
             continue
+        crypto_count += 1
 
         strike_type = market.get("strike_type", "")
         if strike_type != "greater":
@@ -141,7 +145,7 @@ def find_opportunities(markets: list) -> List[QuantOpportunity]:
             if size >= 1.0:
                 opportunities.append(QuantOpportunity(
                     ticker=market.get("ticker", ""),
-                    event_ticker=market.get("event_ticker", series),
+                    event_ticker=market.get("event_ticker", market.get("series_ticker", "")),
                     side="yes",
                     ask_price=yes_ask,
                     model_prob=model_prob,
@@ -158,7 +162,7 @@ def find_opportunities(markets: list) -> List[QuantOpportunity]:
             if size >= 1.0:
                 opportunities.append(QuantOpportunity(
                     ticker=market.get("ticker", ""),
-                    event_ticker=market.get("event_ticker", series),
+                    event_ticker=market.get("event_ticker", market.get("series_ticker", "")),
                     side="no",
                     ask_price=no_ask,
                     model_prob=1.0 - model_prob,
@@ -169,5 +173,5 @@ def find_opportunities(markets: list) -> List[QuantOpportunity]:
 
     # Sort by edge descending — take highest-conviction trades first
     opportunities.sort(key=lambda o: o.edge, reverse=True)
-    print(f"[Quant] Evaluated {len(markets)} markets → {len(opportunities)} opportunities")
+    print(f"[Quant] {crypto_count} crypto markets found → {len(opportunities)} opportunities")
     return opportunities
