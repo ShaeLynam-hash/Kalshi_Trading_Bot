@@ -23,8 +23,8 @@ jobs:
 
       - name: Run arbitrage scan
         env:
-          KALSHI_API_KEY_ID:  ${{ secrets.KALSHI_API_KEY_ID }}
-          KALSHI_PRIVATE_KEY: ${{ secrets.KALSHI_PRIVATE_KEY }}
+          KALSHI_API_KEY_ID:      ${{ secrets.KALSHI_API_KEY_ID }}
+          KALSHI_PRIVATE_KEY_B64: ${{ secrets.KALSHI_PRIVATE_KEY_B64 }}
           MIN_EDGE:        '0.04'
           MAX_TRADE_USDC:  '25'
           MAX_OPEN_POSITIONS: '8'
