@@ -8,6 +8,12 @@ traded_events = set()
 
 def run_scan():
     markets = fetch_markets()
+
+    # Debug: show sample prices to verify format
+    if markets:
+        for m in markets[:3]:
+            print(f"[Debug] {m.get('ticker')} | yes_ask={m.get('yes_ask')} | no_ask={m.get('no_ask')} | event={m.get('event_ticker')}")
+
     opportunities = find_opportunities(markets)
 
     if not opportunities:
