@@ -14,7 +14,7 @@ def _sign(method: str, path: str) -> dict:
     timestamp = str(int(time.time() * 1000))
     message = (timestamp + method.upper() + path).encode("utf-8")
 
-private_key = serialization.load_pem_private_key(
+    private_key = serialization.load_pem_private_key(
         KALSHI_PRIVATE_KEY.encode(),
         password=None,
         backend=default_backend(),
