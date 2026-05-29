@@ -29,6 +29,6 @@ jobs:
           MAX_TRADE_USDC:     '10'
           MAX_OPEN_POSITIONS: '15'
           TAKE_PROFIT_PCT:    '0.50'
-          STOP_LOSS_PCT:      '-0.25'
+          STOP_LOSS_PCT:      '-999'
           DRY_RUN:            'false'
         run: python run_once.py
