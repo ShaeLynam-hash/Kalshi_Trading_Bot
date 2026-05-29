@@ -1,9 +1,9 @@
 from markets import fetch_markets
-from strategies.price_ladder import find_opportunities
+from strategies.bucket_sum import find_opportunities
 from trader import execute_arb
 from config import MAX_OPEN_POSITIONS
 
-open_positions = set()  # track market IDs we've already traded
+traded_events = set()
 
 
 def run_scan():
@@ -20,17 +20,12 @@ def run_scan():
     for opp in opportunities:
         if traded >= MAX_OPEN_POSITIONS:
             break
-
-        # Skip if we already have a position in either market
-        lower_id  = opp.lower_market.get("id", "")
-        higher_id = opp.higher_market.get("id", "")
-        if lower_id in open_positions or higher_id in open_positions:
+        if opp.event_ticker in traded_events:
             continue
 
         success = execute_arb(opp)
         if success:
-            open_positions.add(lower_id)
-            open_positions.add(higher_id)
+            traded_events.add(opp.event_ticker)
             traded += 1
 
     if traded == 0:

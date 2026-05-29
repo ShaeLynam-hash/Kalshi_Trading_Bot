@@ -4,13 +4,12 @@ from config import KALSHI_HOST, DRY_RUN
 from markets import auth_headers
 
 
-
-def place_order(ticker: str, side: str, price_cents: int, count: int, label: str = "") -> bool:
+def place_order(ticker: str, side: str, price: float, count: int, label: str = "") -> bool:
     tag = f"[{'DRY RUN' if DRY_RUN else 'LIVE'}] {label}"
+    price_cents = int(round(price * 100))
 
     if DRY_RUN:
-        cost = price_cents * count / 100
-        print(f"  {tag}: BUY {count} {side.upper()} contracts @ {price_cents}¢ = ${cost:.2f}")
+        print(f"  {tag}: BUY {count} {side.upper()} @ {price:.3f} (${price * count:.2f})")
         return True
 
     try:
@@ -29,7 +28,9 @@ def place_order(ticker: str, side: str, price_cents: int, count: int, label: str
             headers=auth_headers("POST", order_path),
             timeout=10,
         )
-        resp.raise_for_status()
+        if not resp.ok:
+            print(f"  {tag}: order FAILED {resp.status_code}: {resp.text[:200]}")
+            return False
         order = resp.json().get("order", {})
         print(f"  {tag}: order placed → {order.get('id', '?')} status={order.get('status', '?')}")
         return True
@@ -45,7 +46,7 @@ def execute_arb(opportunity) -> bool:
         ok = place_order(
             ticker=leg["ticker"],
             side=leg["side"],
-            price_cents=leg["price"],
+            price=leg["price"],
             count=leg["count"],
             label=leg["label"],
         )
