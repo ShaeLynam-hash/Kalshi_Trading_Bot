@@ -14,6 +14,10 @@ def _sign(method: str, path: str) -> dict:
     timestamp = str(int(time.time() * 1000))
     message = (timestamp + method.upper() + path).encode("utf-8")
 
+    print(f"[Auth] Key ID: {KALSHI_API_KEY_ID[:8]}..." if KALSHI_API_KEY_ID else "[Auth] ERROR: No Key ID set")
+    print(f"[Auth] Key loaded: {bool(KALSHI_PRIVATE_KEY)} | First line: {KALSHI_PRIVATE_KEY.splitlines()[0] if KALSHI_PRIVATE_KEY else 'EMPTY'}")
+    print(f"[Auth] Signing: {timestamp[:6]}... + {method.upper()} + {path}")
+
     private_key = serialization.load_pem_private_key(
         KALSHI_PRIVATE_KEY.encode(),
         password=None,
