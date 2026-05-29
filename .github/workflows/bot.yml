@@ -4,6 +4,8 @@ on:
   schedule:
     - cron: '*/5 * * * *'   # every 5 minutes, 24/7
   workflow_dispatch:         # manual trigger from GitHub UI
+  push:
+    branches: [main]         # also runs on every code push
 
 jobs:
   scan:
