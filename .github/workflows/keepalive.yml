@@ -1,0 +1,12 @@
+name: Keep Bot Alive
+
+on:
+  schedule:
+    - cron: '0 12 * * *'  # runs daily at noon to keep the repo active
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: gautamkrishnar/keepalive-workflow@v2
