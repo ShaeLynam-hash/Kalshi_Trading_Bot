@@ -91,6 +91,12 @@ def find_opportunities(markets: list) -> List[QuantOpportunity]:
     vol_cache = {}
 
     crypto_count = 0
+    filtered_strike_type = 0
+    filtered_no_strike = 0
+    filtered_expired = 0
+    filtered_no_price = 0
+    sample_printed = False
+
     for market in markets:
         asset = _asset_from_market(market)
         if not asset:
@@ -99,28 +105,46 @@ def find_opportunities(markets: list) -> List[QuantOpportunity]:
 
         strike_type = market.get("strike_type", "")
         if strike_type != "greater":
+            filtered_strike_type += 1
             continue
 
         strike = market.get("floor_strike")
         if strike is None:
+            filtered_no_strike += 1
             continue
         try:
             strike = float(strike)
         except (TypeError, ValueError):
+            filtered_no_strike += 1
             continue
 
         close_time = market.get("close_time", "")
         years = _years_to_expiry(close_time)
         if years <= 0:
+            filtered_expired += 1
             continue
 
-        # yes_ask_dollars is in cents on Kalshi; normalize_price already converts
         yes_ask = market.get("yes_ask")
         no_ask  = market.get("no_ask")
         if yes_ask is None or no_ask is None:
+            filtered_no_price += 1
             continue
         if not (0.01 <= yes_ask <= 0.99):
+            filtered_no_price += 1
             continue
+
+        # Print one sample to verify the model is computing correctly
+        if not sample_printed:
+            sample_printed = True
+            if asset not in price_cache:
+                price_cache[asset] = get_spot_price(asset)
+            if asset not in vol_cache:
+                vol_cache[asset] = get_annualized_vol(asset)
+            _spot = price_cache.get(asset)
+            _vol  = vol_cache.get(asset)
+            if _spot and _vol:
+                _model = prob_above(_spot, strike, years, _vol)
+                print(f"[Quant DEBUG] {asset} spot={_spot} strike={strike} years={years:.4f} vol={_vol:.2f} model={_model:.3f} yes_ask={yes_ask:.3f} edge={_model-yes_ask:+.3f}")
 
         # Fetch spot and vol (cached per asset)
         if asset not in price_cache:
@@ -171,7 +195,7 @@ def find_opportunities(markets: list) -> List[QuantOpportunity]:
                     label=f"{asset} NO>{strike} expires {close_time[:10]}",
                 ))
 
-    # Sort by edge descending — take highest-conviction trades first
+    print(f"[Quant] {crypto_count} crypto | filtered: strike_type={filtered_strike_type} no_strike={filtered_no_strike} expired={filtered_expired} no_price={filtered_no_price}")
     opportunities.sort(key=lambda o: o.edge, reverse=True)
     print(f"[Quant] {crypto_count} crypto markets found → {len(opportunities)} opportunities")
     return opportunities
