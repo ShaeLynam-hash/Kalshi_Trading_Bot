@@ -64,11 +64,10 @@ def fetch_markets(force=False):
                 headers=auth_headers("GET", path_base),
                 timeout=15,
             )
-            resp.raise_for_status()
+            if not resp.ok:
+                print(f"[Markets] HTTP {resp.status_code}: {resp.text[:500]}")
+                break
             data = resp.json()
-        except requests.HTTPError as e:
-            print(f"[Markets] HTTP {e.response.status_code}: {e.response.text[:300]}")
-            break
         except Exception as e:
             print(f"[Markets] Fetch error: {e}")
             break
