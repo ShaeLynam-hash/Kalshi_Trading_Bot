@@ -93,7 +93,7 @@ def _market_prob(spot: float, floor_strike, cap_strike, years: float, vol: float
     return None
 
 
-def find_opportunities(markets: list) -> List[QuantOpportunity]:
+def find_opportunities(markets: list, bankroll: float = 50.0) -> List[QuantOpportunity]:
     opportunities = []
     price_cache = {}
     vol_cache   = {}
@@ -152,7 +152,7 @@ def find_opportunities(markets: list) -> List[QuantOpportunity]:
 
         yes_edge = model_prob - yes_ask
         if yes_edge >= MIN_EDGE:
-            size = min(kelly_size(model_prob, yes_ask), MAX_TRADE_USDC)
+            size = min(kelly_size(model_prob, yes_ask, bankroll), MAX_TRADE_USDC)
             if size >= 1.0:
                 opportunities.append(QuantOpportunity(
                     ticker=market.get("ticker", ""),

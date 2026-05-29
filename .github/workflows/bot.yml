@@ -10,7 +10,7 @@ on:
 jobs:
   scan:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 8
 
     steps:
       - uses: actions/checkout@v4
@@ -27,10 +27,10 @@ jobs:
         env:
           KALSHI_API_KEY_ID:      ${{ secrets.KALSHI_API_KEY_ID }}
           KALSHI_PRIVATE_KEY_B64: ${{ secrets.KALSHI_PRIVATE_KEY_B64 }}
-          MIN_EDGE:           '0.02'
-          MAX_TRADE_USDC:     '10'
-          MAX_OPEN_POSITIONS: '15'
-          TAKE_PROFIT_PCT:    '0.50'
-          STOP_LOSS_PCT:      '-999'
+          MIN_EDGE:           '0.08'   # 8% edge required — high conviction only
+          MAX_TRADE_USDC:     '12'     # max $12 per trade
+          MAX_OPEN_POSITIONS: '4'      # concentrated: 4 positions max
+          TAKE_PROFIT_PCT:    '0.50'   # sell at +50% gain
+          STOP_LOSS_PCT:      '-999'   # no stop loss — let trades expire
           DRY_RUN:            'false'
         run: python run_once.py

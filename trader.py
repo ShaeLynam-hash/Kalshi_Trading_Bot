@@ -1,7 +1,29 @@
 import uuid
 import requests
-from config import KALSHI_HOST, DRY_RUN, TAKE_PROFIT_PCT, STOP_LOSS_PCT
+from config import KALSHI_HOST, DRY_RUN, TAKE_PROFIT_PCT
 from markets import auth_headers
+
+
+def get_balance() -> float:
+    """Fetch actual available balance from Kalshi in dollars."""
+    try:
+        path = "/trade-api/v2/portfolio/balance"
+        resp = requests.get(
+            f"{KALSHI_HOST}/portfolio/balance",
+            headers=auth_headers("GET", path),
+            timeout=10,
+        )
+        if not resp.ok:
+            print(f"[Balance] fetch failed {resp.status_code}")
+            return 0.0
+        data = resp.json()
+        # Kalshi returns balance in cents
+        balance = float(data.get("balance", 0)) / 100.0
+        print(f"[Balance] ${balance:.2f} available")
+        return balance
+    except Exception as e:
+        print(f"[Balance] error: {e}")
+        return 0.0
 
 
 def get_open_positions() -> set:
@@ -27,7 +49,6 @@ def get_open_positions() -> set:
 
 
 def get_positions_with_pnl() -> list:
-    """Return full position details including unrealized P&L."""
     try:
         path = "/trade-api/v2/portfolio/positions"
         resp = requests.get(
@@ -98,48 +119,31 @@ def execute_arb(opportunity) -> bool:
 
 
 def run_exits(markets: list):
-    """Check all open positions and sell if take-profit or stop-loss hit."""
+    """Sell positions that hit take-profit."""
     positions = get_positions_with_pnl()
     if not positions:
         return
 
-    # Build a price lookup from current market data
     market_by_ticker = {m["ticker"]: m for m in markets}
-
     exits = 0
+
     for pos in positions:
         ticker   = pos.get("ticker", "")
-        count    = pos.get("position", 0)       # positive = long YES, negative = long NO
-        exposure = pos.get("market_exposure", 0) # total $ invested
-        unreal   = pos.get("unrealized_pnl", None)
+        count    = pos.get("position", 0)
+        exposure = pos.get("market_exposure", 0)
+        unreal   = pos.get("unrealized_pnl")
 
-        if not ticker or count == 0 or exposure == 0:
-            continue
-
-        # If API gives us unrealized_pnl, use it; otherwise skip
-        if unreal is None:
+        if not ticker or count == 0 or not exposure or unreal is None:
             continue
 
         pnl_pct = unreal / abs(exposure)
+        if pnl_pct < TAKE_PROFIT_PCT:
+            continue
 
         market = market_by_ticker.get(ticker)
         if not market:
             continue
 
-        should_exit = False
-        reason = ""
-
-        if pnl_pct >= TAKE_PROFIT_PCT:
-            should_exit = True
-            reason = f"take profit {pnl_pct:+.1%}"
-        elif pnl_pct <= STOP_LOSS_PCT:
-            should_exit = True
-            reason = f"stop loss {pnl_pct:+.1%}"
-
-        if not should_exit:
-            continue
-
-        # Determine side and exit price (use bid — what buyers will pay us)
         if count > 0:
             side       = "yes"
             exit_price = market.get("yes_bid") or market.get("yes_ask", 0.50)
@@ -151,18 +155,12 @@ def run_exits(markets: list):
         if not exit_price or exit_price <= 0.01:
             continue
 
-        print(f"[Exit] {ticker} {reason} → selling {count} {side.upper()} @ {exit_price:.3f}")
-        place_order(
-            ticker=ticker,
-            side=side,
-            action="sell",
-            price=exit_price,
-            count=count,
-            label=f"EXIT {reason}",
-        )
+        print(f"[Exit] {ticker} take profit {pnl_pct:+.1%} → selling {count} {side.upper()} @ {exit_price:.3f}")
+        place_order(ticker=ticker, side=side, action="sell",
+                    price=exit_price, count=count, label=f"TAKE PROFIT {pnl_pct:+.1%}")
         exits += 1
 
     if exits:
-        print(f"[Exit] Closed {exits} position(s) this scan.")
+        print(f"[Exit] Closed {exits} position(s).")
     else:
-        print(f"[Exit] {len(positions)} open position(s), none hit exit threshold.")
+        print(f"[Exit] {len(positions)} open — none hit take-profit yet.")
