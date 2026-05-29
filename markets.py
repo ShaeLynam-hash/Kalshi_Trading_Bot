@@ -66,6 +66,9 @@ def fetch_markets(force=False):
             )
             resp.raise_for_status()
             data = resp.json()
+        except requests.HTTPError as e:
+            print(f"[Markets] HTTP {e.response.status_code}: {e.response.text[:300]}")
+            break
         except Exception as e:
             print(f"[Markets] Fetch error: {e}")
             break
