@@ -69,7 +69,10 @@ def fetch_markets(force=False):
                 break
             data = resp.json()
         except Exception as e:
-            print(f"[Markets] Fetch error: {e}")
+            print(f"[Markets] Error type: {type(e).__name__}")
+            print(f"[Markets] Error: {e}")
+            if hasattr(e, 'response') and e.response is not None:
+                print(f"[Markets] Response body: {e.response.text[:500]}")
             break
 
         batch = data.get("markets", [])

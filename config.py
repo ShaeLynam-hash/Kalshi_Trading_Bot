@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-KALSHI_HOST = "https://trading-api.kalshi.com/trade-api/v2"
+KALSHI_HOST = "https://api.elections.kalshi.com/trade-api/v2"
 
 KALSHI_API_KEY_ID = os.getenv("KALSHI_API_KEY_ID", "")
 
