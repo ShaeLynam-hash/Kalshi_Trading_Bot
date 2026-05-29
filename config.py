@@ -22,3 +22,7 @@ DRY_RUN            = os.getenv("DRY_RUN", "true").lower() != "false"
 # Kalshi takes ~7% of net profit as a fee on winning contracts.
 # Arb is only safe when profit margin covers fees + MIN_EDGE.
 KALSHI_FEE_RATE    = 0.07
+
+# Exit thresholds — sell early if position moves enough
+TAKE_PROFIT_PCT    = float(os.getenv("TAKE_PROFIT_PCT", "0.40"))  # sell at +40% gain
+STOP_LOSS_PCT      = float(os.getenv("STOP_LOSS_PCT",   "-0.40")) # sell at -40% loss

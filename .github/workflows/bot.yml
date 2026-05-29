@@ -25,8 +25,10 @@ jobs:
         env:
           KALSHI_API_KEY_ID:      ${{ secrets.KALSHI_API_KEY_ID }}
           KALSHI_PRIVATE_KEY_B64: ${{ secrets.KALSHI_PRIVATE_KEY_B64 }}
-          MIN_EDGE:        '0.05'
-          MAX_TRADE_USDC:  '10'
+          MIN_EDGE:           '0.05'
+          MAX_TRADE_USDC:     '10'
           MAX_OPEN_POSITIONS: '15'
-          DRY_RUN:         'false'
+          TAKE_PROFIT_PCT:    '0.40'
+          STOP_LOSS_PCT:      '-0.40'
+          DRY_RUN:            'false'
         run: python run_once.py

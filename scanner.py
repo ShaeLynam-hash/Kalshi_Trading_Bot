@@ -12,7 +12,7 @@ from strategies.arb_parity   import find_opportunities as parity_opps
 from strategies.bucket_sum   import find_opportunities as bucket_opps
 from strategies.price_ladder import find_opportunities as ladder_opps
 from strategies.quant_crypto import find_opportunities as quant_opps
-from trader import execute_arb, get_open_positions
+from trader import execute_arb, get_open_positions, run_exits
 from config import MAX_OPEN_POSITIONS
 
 # Max trades per category per scan — forces diversification
@@ -32,6 +32,9 @@ def run_scan():
         f"sample: {sample.get('ticker')} "
         f"yes_ask={sample.get('yes_ask')} no_ask={sample.get('no_ask')}"
     )
+
+    # Check exits first — sell anything that hit take-profit or stop-loss
+    run_exits(markets)
 
     # Fetch real open positions from Kalshi so we never double-buy
     open_positions = get_open_positions()
