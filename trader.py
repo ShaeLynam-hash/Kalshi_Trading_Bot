@@ -4,6 +4,7 @@ from config import KALSHI_HOST, DRY_RUN
 from markets import auth_headers
 
 
+
 def place_order(ticker: str, side: str, price_cents: int, count: int, label: str = "") -> bool:
     tag = f"[{'DRY RUN' if DRY_RUN else 'LIVE'}] {label}"
 
@@ -13,6 +14,7 @@ def place_order(ticker: str, side: str, price_cents: int, count: int, label: str
         return True
 
     try:
+        order_path = "/trade-api/v2/portfolio/orders"
         resp = requests.post(
             f"{KALSHI_HOST}/portfolio/orders",
             json={
@@ -24,7 +26,7 @@ def place_order(ticker: str, side: str, price_cents: int, count: int, label: str
                 "count":           count,
                 f"{side}_price":   price_cents,
             },
-            headers=auth_headers(),
+            headers=auth_headers("POST", order_path),
             timeout=10,
         )
         resp.raise_for_status()
