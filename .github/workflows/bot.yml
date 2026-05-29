@@ -1,0 +1,32 @@
+name: Kalshi Arbitrage Bot
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'  # every 15 minutes, 24/7
+  workflow_dispatch:         # manual trigger from GitHub UI
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run arbitrage scan
+        env:
+          KALSHI_EMAIL:    ${{ secrets.KALSHI_EMAIL }}
+          KALSHI_PASSWORD: ${{ secrets.KALSHI_PASSWORD }}
+          MIN_EDGE:        '0.04'
+          MAX_TRADE_USDC:  '25'
+          MAX_OPEN_POSITIONS: '8'
+          DRY_RUN:         'false'
+        run: python run_once.py
