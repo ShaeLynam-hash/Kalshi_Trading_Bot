@@ -18,3 +18,7 @@ MAX_TRADE_USDC     = float(os.getenv("MAX_TRADE_USDC", "25"))
 MAX_OPEN_POSITIONS = int(os.getenv("MAX_OPEN_POSITIONS", "8"))
 SCAN_INTERVAL      = int(os.getenv("SCAN_INTERVAL", "20"))
 DRY_RUN            = os.getenv("DRY_RUN", "true").lower() != "false"
+
+# Kalshi takes ~7% of net profit as a fee on winning contracts.
+# Arb is only safe when profit margin covers fees + MIN_EDGE.
+KALSHI_FEE_RATE    = 0.07
