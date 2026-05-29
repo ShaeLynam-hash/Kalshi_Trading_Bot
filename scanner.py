@@ -15,6 +15,9 @@ from strategies.quant_crypto import find_opportunities as quant_opps
 from trader import execute_arb, get_open_positions
 from config import MAX_OPEN_POSITIONS
 
+# Max trades per category per scan — forces diversification
+MAX_PER_CATEGORY = 3
+
 
 def run_scan():
     markets = fetch_markets()
@@ -33,6 +36,14 @@ def run_scan():
     # Fetch real open positions from Kalshi so we never double-buy
     open_positions = get_open_positions()
 
+    # Also track event_tickers we hold — skip the whole event if we're already in it
+    open_events = set()
+    for m in markets:
+        if m.get("ticker") in open_positions:
+            ev = m.get("event_ticker") or m.get("series_ticker", "")
+            if ev:
+                open_events.add(ev)
+
     # Run all strategies — pure arb first, quant last
     all_opps = []
     all_opps.extend(("parity", o, o.edge)            for o in parity_opps(markets))
@@ -48,25 +59,36 @@ def run_scan():
     print(f"[Scanner] {len(all_opps)} total opportunities across all strategies")
 
     traded = 0
+    category_counts: dict[str, int] = {}
+
     for strategy, opp, edge in all_opps:
         if traded >= MAX_OPEN_POSITIONS:
             break
 
-        # Skip any market we already hold a position in
-        ticker = getattr(opp, "ticker", None) or getattr(opp, "event_ticker", "")
-        if ticker in open_positions:
-            print(f"[Scanner] Skipping {ticker} — already have open position")
+        # Don't over-concentrate in one strategy/category
+        if category_counts.get(strategy, 0) >= MAX_PER_CATEGORY:
             continue
 
-        # Skip bucket/ladder opps if any leg ticker is already held
-        leg_tickers = {leg["ticker"] for leg in opp.legs()}
+        leg_tickers  = {leg["ticker"] for leg in opp.legs()}
+        event_ticker = getattr(opp, "event_ticker", "")
+
+        # Skip if we already hold any leg of this trade
         if leg_tickers & open_positions:
+            print(f"[Scanner] Skipping {event_ticker} — already have open position")
+            continue
+
+        # Skip if we already have ANY position in this event
+        if event_ticker and event_ticker in open_events:
+            print(f"[Scanner] Skipping {event_ticker} — already in this event")
             continue
 
         print(f"\n[{strategy.upper()}] edge={edge:.1%}")
         success = execute_arb(opp)
         if success:
             open_positions.update(leg_tickers)
+            if event_ticker:
+                open_events.add(event_ticker)
+            category_counts[strategy] = category_counts.get(strategy, 0) + 1
             traded += 1
 
     if traded == 0:
