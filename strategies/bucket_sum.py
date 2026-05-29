@@ -87,5 +87,9 @@ def find_opportunities(markets: list) -> list:
             contracts=contracts,
         ))
 
+    total_markets = len(markets)
+    passed_filter = sum(1 for m in markets if yes_ask(m) is not None and 0.001 < (yes_ask(m) or 0) < 0.999)
+    print(f"[Strategy] {total_markets} markets | {passed_filter} passed price filter | {len(events)} events | {len(opportunities)} opportunities")
+
     opportunities.sort(key=lambda o: o.guaranteed_edge, reverse=True)
     return opportunities

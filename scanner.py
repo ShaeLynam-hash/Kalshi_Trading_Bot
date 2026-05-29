@@ -9,10 +9,15 @@ traded_events = set()
 def run_scan():
     markets = fetch_markets()
 
-    # Debug: show sample prices to verify format
+    # Debug: check price format and event grouping
     if markets:
-        for m in markets[:3]:
-            print(f"[Debug] {m.get('ticker')} | yes_ask={m.get('yes_ask')} | no_ask={m.get('no_ask')} | event={m.get('event_ticker')}")
+        sample = markets[0]
+        ya = sample.get("yes_ask")
+        na = sample.get("no_ask")
+        ev = sample.get("event_ticker", "")
+        print(f"[Debug] Sample market fields: yes_ask type={type(ya).__name__} gt1={ya > 1 if ya else 'N/A'} has_event={bool(ev)}")
+        events = set(m.get("event_ticker") for m in markets if m.get("event_ticker"))
+        print(f"[Debug] Unique events: {len(events)}")
 
     opportunities = find_opportunities(markets)
 
