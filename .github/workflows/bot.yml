@@ -28,10 +28,10 @@ jobs:
           KALSHI_API_KEY_ID:      ${{ secrets.KALSHI_API_KEY_ID }}
           KALSHI_PRIVATE_KEY_B64: ${{ secrets.KALSHI_PRIVATE_KEY_B64 }}
           MIN_EDGE:           '0.08'   # 8% edge — high conviction only
-          MAX_TRADE_USDC:     '10'     # max $10 per trade
+          MAX_TRADE_USDC:     '2'      # max $2 per trade (small account)
           MAX_OPEN_POSITIONS: '3'      # max 3 positions at a time
-          MIN_BALANCE:        '20'     # stop trading below $20
+          MIN_BALANCE:        '5'      # stop trading below $5
           TAKE_PROFIT_PCT:    '0.50'   # sell at +50% gain
           STOP_LOSS_PCT:      '-999'   # let trades expire
-          DRY_RUN:            'true'   # PAPER TRADE ONLY — set to false when ready
+          DRY_RUN:            'false'
         run: python run_once.py
