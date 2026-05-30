@@ -32,14 +32,16 @@ def get_open_positions() -> set:
         path = "/trade-api/v2/portfolio/positions"
         resp = requests.get(
             f"{KALSHI_HOST}/portfolio/positions",
-            params={"limit": 200, "settlement_status": "unsettled"},
+            params={"limit": 200},
             headers=auth_headers("GET", path),
             timeout=10,
         )
         if not resp.ok:
             print(f"[Positions] fetch failed {resp.status_code}: {resp.text[:200]}")
             return set()
-        positions = resp.json().get("market_positions", [])
+        data = resp.json()
+        # API may return market_positions or positions depending on version
+        positions = data.get("market_positions") or data.get("positions") or []
         tickers = {p["ticker"] for p in positions if p.get("position", 0) != 0}
         print(f"[Positions] {len(tickers)} open positions")
         return tickers
@@ -53,13 +55,15 @@ def get_positions_with_pnl() -> list:
         path = "/trade-api/v2/portfolio/positions"
         resp = requests.get(
             f"{KALSHI_HOST}/portfolio/positions",
-            params={"limit": 200, "settlement_status": "unsettled"},
+            params={"limit": 200},
             headers=auth_headers("GET", path),
             timeout=10,
         )
         if not resp.ok:
             return []
-        return [p for p in resp.json().get("market_positions", []) if p.get("position", 0) != 0]
+        data = resp.json()
+        positions = data.get("market_positions") or data.get("positions") or []
+        return [p for p in positions if p.get("position", 0) != 0]
     except Exception as e:
         print(f"[Positions] P&L fetch error: {e}")
         return []

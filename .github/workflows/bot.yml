@@ -2,10 +2,10 @@ name: Kalshi Arbitrage Bot
 
 on:
   schedule:
-    - cron: '*/5 * * * *'   # every 5 minutes, 24/7
-  workflow_dispatch:         # manual trigger from GitHub UI
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
   push:
-    branches: [main]         # also runs on every code push
+    branches: [main]
 
 jobs:
   scan:
@@ -27,10 +27,11 @@ jobs:
         env:
           KALSHI_API_KEY_ID:      ${{ secrets.KALSHI_API_KEY_ID }}
           KALSHI_PRIVATE_KEY_B64: ${{ secrets.KALSHI_PRIVATE_KEY_B64 }}
-          MIN_EDGE:           '0.08'   # 8% edge required — high conviction only
-          MAX_TRADE_USDC:     '12'     # max $12 per trade
-          MAX_OPEN_POSITIONS: '4'      # concentrated: 4 positions max
+          MIN_EDGE:           '0.08'   # 8% edge — high conviction only
+          MAX_TRADE_USDC:     '10'     # max $10 per trade
+          MAX_OPEN_POSITIONS: '3'      # max 3 positions at a time
+          MIN_BALANCE:        '20'     # stop trading below $20
           TAKE_PROFIT_PCT:    '0.50'   # sell at +50% gain
-          STOP_LOSS_PCT:      '-999'   # no stop loss — let trades expire
-          DRY_RUN:            'false'
+          STOP_LOSS_PCT:      '-999'   # let trades expire
+          DRY_RUN:            'true'   # PAPER TRADE ONLY — set to false when ready
         run: python run_once.py

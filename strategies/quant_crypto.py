@@ -167,7 +167,7 @@ def find_opportunities(markets: list, bankroll: float = 50.0) -> List[QuantOppor
 
         no_edge = (1.0 - model_prob) - no_ask
         if no_edge >= MIN_EDGE:
-            size = min(kelly_size(1.0 - model_prob, no_ask), MAX_TRADE_USDC)
+            size = min(kelly_size(1.0 - model_prob, no_ask, bankroll), MAX_TRADE_USDC)
             if size >= 1.0:
                 opportunities.append(QuantOpportunity(
                     ticker=market.get("ticker", ""),

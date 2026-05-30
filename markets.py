@@ -7,8 +7,7 @@ from cryptography.hazmat.backends import default_backend
 from config import KALSHI_HOST, KALSHI_API_KEY_ID, KALSHI_PRIVATE_KEY
 
 CRYPTO_SERIES = ["KXBTC", "KXETH", "KXSOL", "KXDOGE", "KXXRP"]
-CACHE_TTL  = 60
-MAX_PAGES  = 60
+CACHE_TTL = 60
 _cache = {"markets": [], "fetched_at": 0}
 
 
@@ -65,16 +64,7 @@ def normalize_market(m: dict) -> dict:
     }
 
 
-def yes_ask(market):
-    return normalize_price(market, "yes_ask")
-
-
-def no_ask(market):
-    return normalize_price(market, "no_ask")
-
-
 def _fetch_series(series_ticker: str) -> list:
-    """Fetch all markets for a specific series (guaranteed to return crypto markets)."""
     markets = []
     cursor = None
     while True:
@@ -105,7 +95,6 @@ def fetch_markets(force=False):
     all_markets = []
     seen_tickers = set()
 
-    # Always fetch crypto series first — these are what the quant model needs
     for series in CRYPTO_SERIES:
         batch = _fetch_series(series)
         for m in batch:
@@ -114,30 +103,6 @@ def fetch_markets(force=False):
                 seen_tickers.add(m["ticker"])
         print(f"[Markets] {series}: {len(batch)} markets")
         time.sleep(0.3)
-
-    # Then fetch all other open markets for arb strategies
-    cursor = None
-    for page in range(MAX_PAGES):
-        params = {"limit": 200, "status": "open"}
-        if cursor:
-            params["cursor"] = cursor
-        try:
-            resp = requests.get(f"{KALSHI_HOST}/markets", params=params, timeout=15)
-            if not resp.ok:
-                break
-            data = resp.json()
-        except Exception as e:
-            print(f"[Markets] fetch error: {e}")
-            break
-        batch = data.get("markets", [])
-        for m in batch:
-            if m["ticker"] not in seen_tickers:
-                all_markets.append(normalize_market(m))
-                seen_tickers.add(m["ticker"])
-        cursor = data.get("cursor")
-        if not cursor or not batch:
-            break
-        time.sleep(0.2)
 
     _cache["markets"] = all_markets
     _cache["fetched_at"] = time.time()
